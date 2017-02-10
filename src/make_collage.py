@@ -26,7 +26,7 @@ class Particle():
 
     def compute_direction_vector(self, weights, array):
         x, y, w, h = self.y, self.x, self.image.size[0], self.image.size[1]
-        
+
         assert(w > 0)
         assert(h > 0)
 
@@ -41,15 +41,15 @@ class Particle():
         all_same_color = np.all(subweights.flatten() == subweights.flatten()[0])
         if all_same_color:
             self.direction = np.array([random.uniform(-1,1),random.uniform(-1,1)]).astype(float)
-            
+
             # Somewhat want to go back to the center
             if random.uniform(0, 1) < .4:
                 center_x, center_y = weights.shape[0]/float(2), weights.shape[1]/float(2)
-                #self.direction = np.array([self.orig_x-(self.x+float(w)/2), 
+                #self.direction = np.array([self.orig_x-(self.x+float(w)/2),
                 #                           self.orig_y-(self.y+float(h)/2)])
-                self.direction = np.array([center_x-(self.x+float(w)/2), 
+                self.direction = np.array([center_x-(self.x+float(w)/2),
                                            center_y-(self.y+float(h)/2)])
-                
+
             self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
 
             return
@@ -110,7 +110,7 @@ def organize_grid(fnames, dim=200, n_cols=3):
 
 def resize_and_pad(image, new_size):
     old_size = image.size
-    new_im = Image.new("RGBA", new_size, (255, 255, 255, 255))  
+    new_im = Image.new("RGBA", new_size, (255, 255, 255, 0))
     new_im.paste(image, ((new_size[0]-old_size[0])/2,
                          (new_size[1]-old_size[1])/2))
     return new_im

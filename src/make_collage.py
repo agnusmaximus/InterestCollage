@@ -21,6 +21,7 @@ class Particle():
     def __init__(self, shattered_piece, radius_pad=0):
         self.image = shattered_piece[0]
         self.y, self.x = shattered_piece[1]
+        self.orig_x, self.orig_y = self.x, self.y
         self.radius_pad = radius_pad
 
     def compute_direction_vector(self, weights, array):
@@ -40,7 +41,15 @@ class Particle():
         all_same_color = np.all(subweights.flatten() == subweights.flatten()[0])
         if all_same_color:
             self.direction = np.array([random.uniform(-1,1),random.uniform(-1,1)]).astype(float)
+            
+            # Somewhat want to go back to the center
+            if random.uniform(0, 1) < .4:
+                center_x, center_y = weights.shape[0]/float(2), weights.shape[1]/float(2)
+                self.direction = np.array([self.orig_x-(self.x+float(w)/2), 
+                                           self.orig_y-(self.y+float(h)/2)])
+                
             self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
+
             return
 
         #print(array[y_min:y_max,x_min:x_max])
@@ -50,17 +59,21 @@ class Particle():
         n_rows = x_max-x_min
         n_cols = y_max-y_min
 
+        r,g,b,a = self.image.split()
+        a = np.array(a)
+
         #print(subweights.shape, n_rows, n_cols)
         for i in range(n_rows):
             for j in range(n_cols):
-                dir_vector += subweights[j][i] * np.array([i-n_rows/float(2), j-n_cols/float(2)]).astype(float)
+                if a[j][i] != 0:
+                    dir_vector += subweights[j][i] * np.array([i-n_rows/float(2), j-n_cols/float(2)]).astype(float)
         self.direction = dir_vector
 
         self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
 
     def apply_direction_vector(self, (w,h)):
-        self.x += self.direction[0]*5
-        self.y += self.direction[1]*5
+        self.x += self.direction[0]*2
+        self.y += self.direction[1]*2
         self.x = int(np.round(self.x))
         self.y = int(np.round(self.y))
         self.x = max(self.x, 0)
@@ -77,7 +90,7 @@ def render_particles(particles, sz):
 def random_location(size):
     return (random.randint(0, size[0]), random.randint(0, size[1]))
 
-def organize_grid(fnames, dim=200, n_cols=2):
+def organize_grid(fnames, dim=200, n_cols=3):
     imgs = [Image.open(x) for x in fnames]
 
     for img in imgs:

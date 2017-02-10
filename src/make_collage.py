@@ -141,21 +141,24 @@ def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
     shattered_pieces = shatter(collage_initial, n_points=15000)
     particles = [Particle(x) for x in shattered_pieces]
-    #particles = [Particle(shattered_pieces[len(shattered_pieces)/2])]
 
-    target = Image.open(overlay_names[0]).convert('L')
-    #target = target.filter(ImageFilter.FIND_EDGES)
-    target = target.point(lambda x: 0 if x<128 else 255, '1')
+    render_particles(particles, collage_initial.size).save("output/output_%d.png" % 0)
+    cur_step = 1
 
-    render_particles_on_top_of_target(particles, target, collage_initial.size).show()
+    for target_name in overlay_names:
 
-    for i in range(1000):
-        compute_direction_vectors(particles, target, collage_initial.size)
-        apply_direction_vectors(particles, collage_initial.size)
-        intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)
-        intermediate = render_particles(particles, collage_initial.size)
-        intermediate.save("test/%d.png" % i)
-        intermediate_overlay.save("test/%d_overlayed.png" % i)
+        target = Image.open(target_name).convert('L')
+        target = target.point(lambda x: 0 if x<128 else 255, '1')
+
+        for i in range(1000):
+            compute_direction_vectors(particles, target, collage_initial.size)
+            apply_direction_vectors(particles, collage_initial.size)
+            intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)
+            intermediate = render_particles(particles, collage_initial.size)
+            intermediate.save("test/%d.png" % i)
+            intermediate_overlay.save("test/%d_overlayed.png" % i)
+            intermediate.save("output/output%d.png" % cur_step)
+            cur_step += 1
 
 if __name__=="__main__":
 

@@ -45,8 +45,10 @@ class Particle():
             # Somewhat want to go back to the center
             if random.uniform(0, 1) < .4:
                 center_x, center_y = weights.shape[0]/float(2), weights.shape[1]/float(2)
-                self.direction = np.array([self.orig_x-(self.x+float(w)/2), 
-                                           self.orig_y-(self.y+float(h)/2)])
+                #self.direction = np.array([self.orig_x-(self.x+float(w)/2), 
+                #                           self.orig_y-(self.y+float(h)/2)])
+                self.direction = np.array([center_x-(self.x+float(w)/2), 
+                                           center_y-(self.y+float(h)/2)])
                 
             self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
 
@@ -137,7 +139,7 @@ def apply_direction_vectors(particles, (w,h)):
 
 def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
-    shattered_pieces = shatter(collage_initial, n_points=10000)
+    shattered_pieces = shatter(collage_initial, n_points=15000)
     particles = [Particle(x) for x in shattered_pieces]
     #particles = [Particle(shattered_pieces[len(shattered_pieces)/2])]
 
@@ -147,7 +149,7 @@ def make_collage(collage_names, overlay_names):
 
     render_particles_on_top_of_target(particles, target, collage_initial.size).show()
 
-    for i in range(100):
+    for i in range(1000):
         compute_direction_vectors(particles, target, collage_initial.size)
         apply_direction_vectors(particles, collage_initial.size)
         intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)

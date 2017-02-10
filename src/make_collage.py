@@ -25,13 +25,23 @@ class Particle():
 
     def compute_direction_vector(self, weights, array):
         x, y, w, h = self.y, self.x, self.image.size[0], self.image.size[1]
+        
+        assert(w > 0)
+        assert(h > 0)
+
         x_min = max(0, x-self.radius_pad)
         x_max = min(weights.shape[1], x+w+self.radius_pad)
         y_min = max(0, y-self.radius_pad)
         y_max = min(weights.shape[0], y+h+self.radius_pad)
-        #print(x_min,x_max,y_min,y_max)
         subweights = weights[y_min:y_max, x_min:x_max]
         dir_vector = np.array([0.0, 0.0])
+
+        # Don't move if all same color
+        all_same_color = np.all(subweights.flatten() == subweights.flatten()[0])
+        if all_same_color:
+            self.direction = np.array([random.uniform(-1,1),random.uniform(-1,1)]).astype(float)
+            self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
+            return
 
         #print(array[y_min:y_max,x_min:x_max])
         #print(subweights)
@@ -46,16 +56,17 @@ class Particle():
                 dir_vector += subweights[j][i] * np.array([i-n_rows/float(2), j-n_cols/float(2)]).astype(float)
         self.direction = dir_vector
 
-        if np.linalg.norm < 1:
-            self.direction = np.array([0,0]).astype(float)
-        else:
-            self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
+        self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
 
-    def apply_direction_vector(self):
+    def apply_direction_vector(self, (w,h)):
         self.x += self.direction[0]*5
         self.y += self.direction[1]*5
-        self.x = int(self.x)
-        self.y = int(self.y)
+        self.x = int(np.round(self.x))
+        self.y = int(np.round(self.y))
+        self.x = max(self.x, 0)
+        self.y = max(self.y, 0)
+        self.x = min(self.x, h - self.image.size[1])
+        self.y = min(self.y, w - self.image.size[0])
 
 def render_particles(particles, sz):
     new_image = Image.new("RGBA", sz, (255, 255, 255, 20))
@@ -84,7 +95,7 @@ def organize_grid(fnames, dim=200, n_cols=2):
 
 def resize_and_pad(image, new_size):
     old_size = image.size
-    new_im = Image.new("RGBA", new_size, (255, 255, 255, 0))
+    new_im = Image.new("RGBA", new_size, (255, 255, 255, 255))  
     new_im.paste(image, ((new_size[0]-old_size[0])/2,
                          (new_size[1]-old_size[1])/2))
     return new_im
@@ -107,9 +118,9 @@ def compute_direction_vectors(particles, image_to_approximate, size):
         particle.compute_direction_vector(weights, to_approximate_array)
     print("Done computing direction vectors...")
 
-def apply_direction_vectors(particles):
+def apply_direction_vectors(particles, (w,h)):
     for particle in particles:
-        particle.apply_direction_vector()
+        particle.apply_direction_vector((w,h))
 
 def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
@@ -118,15 +129,18 @@ def make_collage(collage_names, overlay_names):
     #particles = [Particle(shattered_pieces[len(shattered_pieces)/2])]
 
     target = Image.open(overlay_names[0]).convert('L')
-    target = target.filter(ImageFilter.FIND_EDGES)
+    #target = target.filter(ImageFilter.FIND_EDGES)
+    target = target.point(lambda x: 0 if x<128 else 255, '1')
 
     render_particles_on_top_of_target(particles, target, collage_initial.size).show()
 
     for i in range(100):
         compute_direction_vectors(particles, target, collage_initial.size)
-        apply_direction_vectors(particles)
-        intermediate = render_particles_on_top_of_target(particles, target, collage_initial.size)
+        apply_direction_vectors(particles, collage_initial.size)
+        intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)
+        intermediate = render_particles(particles, collage_initial.size)
         intermediate.save("test/%d.png" % i)
+        intermediate_overlay.save("test/%d_overlayed.png" % i)
 
 if __name__=="__main__":
 

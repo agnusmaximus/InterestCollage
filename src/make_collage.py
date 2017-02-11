@@ -150,7 +150,7 @@ def make_collage(collage_names, overlay_names):
         target = Image.open(target_name).convert('L')
         target = target.point(lambda x: 0 if x<128 else 255, '1')
 
-        for i in range(1000):
+        for i in range(200):
             compute_direction_vectors(particles, target, collage_initial.size)
             apply_direction_vectors(particles, collage_initial.size)
             intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)

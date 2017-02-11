@@ -15,7 +15,7 @@ def show_overlay_triangulation(image, triangulation):
         draw.line(triangle_points, fill=(0, 0, 0, 255), width=1)
     #image.show()
 
-def crop_region(polygon, image):
+def crop_region(polygon, image, points_added):
     base_image = np.asarray(image)
 
     maskIm = Image.new('L', (base_image.shape[1], base_image.shape[0]), 0)
@@ -23,9 +23,16 @@ def crop_region(polygon, image):
     bbox = maskIm.getbbox()
     mask = np.array(maskIm)
 
+    for i in range(mask.shape[0]):
+        for j in range(mask.shape[1]):
+            if mask[i][j] != 0:
+                if (i,j) in points_added:
+                    mask[i][j] = 0
+                points_added.add((i,j))
+
     img = np.empty(base_image.shape,dtype='uint8')
     img[:,:,:3] = base_image[:,:,:3]
-    img[:,:,3] = mask * 200
+    img[:,:,3] = mask * 220
     result = Image.fromarray(img, "RGBA")
 
     cropped = result.crop(bbox)
@@ -37,10 +44,13 @@ def shatter(image, n_points=10000):
     selected_triangulation = triangulate(rectangle(n_points, w, h))
     show_overlay_triangulation(image, selected_triangulation)
     shattered = []
+    points_added = set()
     for i, triangle in enumerate(selected_triangulation):
-        cropped, location = crop_region(triangle, image)
+        cropped, location = crop_region(triangle, image, points_added)
         if cropped:
             shattered.append((cropped, location))
+
+    print(len(points_added))
     return shattered
 
 def rectangle(n_points, n, m):

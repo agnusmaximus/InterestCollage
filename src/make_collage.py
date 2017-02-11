@@ -24,7 +24,7 @@ class Particle():
         self.orig_x, self.orig_y = self.x, self.y
         self.radius_pad = radius_pad
 
-    def compute_direction_vector(self, weights, array):
+    def compute_direction_vector(self, weights, array, contract=True):
         x, y, w, h = self.y, self.x, self.image.size[0], self.image.size[1]
 
         assert(w > 0)
@@ -42,21 +42,21 @@ class Particle():
         if all_same_color:
             self.direction = np.array([random.uniform(-1,1),random.uniform(-1,1)]).astype(float)
 
-            # Somewhat want to go back to the center
             if random.uniform(0, 1) < .4:
                 center_x, center_y = weights.shape[0]/float(2), weights.shape[1]/float(2)
-                #self.direction = np.array([self.orig_x-(self.x+float(w)/2),
-                #                           self.orig_y-(self.y+float(h)/2)])
-                self.direction = np.array([center_x-(self.x+float(w)/2),
-                                           center_y-(self.y+float(h)/2)])
+
+                if not contract:
+                    # Somewhat want to go back to origin
+                    self.direction = np.array([self.orig_x-(self.x+float(w)/2),
+                                               self.orig_y-(self.y+float(h)/2)])
+                else:
+                    # Somewhat want to go back to the center                            
+                    self.direction = np.array([center_x-(self.x+float(w)/2),
+                                               center_y-(self.y+float(h)/2)])
 
             self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
 
             return
-
-        #print(array[y_min:y_max,x_min:x_max])
-        #print(subweights)
-        #sys.exit(0)
 
         n_rows = x_max-x_min
         n_cols = y_max-y_min
@@ -84,7 +84,7 @@ class Particle():
         self.y = min(self.y, w - self.image.size[0])
 
 def render_particles(particles, sz):
-    new_image = Image.new("RGBA", sz, (255, 255, 255, 20))
+    new_image = Image.new("RGBA", sz, (20, 20, 20, 255))
     for particle in particles:
         new_image.paste(particle.image, (particle.y, particle.x), particle.image)
     return new_image
@@ -110,7 +110,7 @@ def organize_grid(fnames, dim=200, n_cols=3):
 
 def resize_and_pad(image, new_size):
     old_size = image.size
-    new_im = Image.new("RGBA", new_size, (128, 128, 128, 0))
+    new_im = Image.new("RGBA", new_size, (30, 30, 30, 128))
     new_im.paste(image, ((new_size[0]-old_size[0])/2,
                          (new_size[1]-old_size[1])/2))
     return new_im
@@ -121,7 +121,7 @@ def render_particles_on_top_of_target(particles, target, sz):
     overall.paste(img, (0,0), img)
     return overall
 
-def compute_direction_vectors(particles, image_to_approximate, size):
+def compute_direction_vectors(particles, image_to_approximate, size, contract=False):
     print("Computing attractive forces...")
     image_to_approximate = resize_and_pad(image_to_approximate, size)
     rendered_array = np.array(render_particles(particles, size).convert('L'))
@@ -130,7 +130,7 @@ def compute_direction_vectors(particles, image_to_approximate, size):
 
     print("Assigning attractive force vectors...")
     for i, particle in enumerate(particles):
-        particle.compute_direction_vector(weights, to_approximate_array)
+        particle.compute_direction_vector(weights, to_approximate_array, contract=contract)
     print("Done computing direction vectors...")
 
 def apply_direction_vectors(particles, (w,h)):
@@ -139,25 +139,26 @@ def apply_direction_vectors(particles, (w,h)):
 
 def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
-    shattered_pieces = shatter(collage_initial, n_points=2)
+    shattered_pieces = shatter(collage_initial, n_points=30000)
+
     particles = [Particle(x) for x in shattered_pieces]
 
-    render_particles(particles, collage_initial.size).save("output/output_%d.png" % 0, quality=100)
+    render_particles(particles, collage_initial.size).save("output/%04d.png" % 0, quality=100)
     cur_step = 1
 
-    for target_name in overlay_names:
+    for overlay_index, target_name in enumerate(overlay_names):
 
         target = Image.open(target_name).convert('L')
         target = target.point(lambda x: 0 if x<128 else 255, '1')
 
         for i in range(200):
-            compute_direction_vectors(particles, target, collage_initial.size)
+            compute_direction_vectors(particles, target, collage_initial.size, contract=overlay_index % 2 == 0)
             apply_direction_vectors(particles, collage_initial.size)
             intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)
             intermediate = render_particles(particles, collage_initial.size)
             intermediate.save("test/%d.png" % i, quality=100)
             intermediate_overlay.save("test/%d_overlayed.png" % i, quality=100)
-            intermediate.save("output/output%d.png" % cur_step, quality=100)
+            intermediate.save("output/%04d.png" % cur_step, quality=100)
             cur_step += 1
 
 if __name__=="__main__":

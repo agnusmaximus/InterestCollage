@@ -42,7 +42,7 @@ def crop_region(polygon, image, points_added):
 def shatter(image, n_points=10000):
     w, h = image.size
     selected_triangulation = triangulate(rectangle(n_points, w, h))
-    show_overlay_triangulation(image, selected_triangulation)
+    #show_overlay_triangulation(image, selected_triangulation)
     shattered = []
     points_added = set()
     for i, triangle in enumerate(selected_triangulation):

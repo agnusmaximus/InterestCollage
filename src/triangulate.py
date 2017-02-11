@@ -23,8 +23,8 @@ def crop_region(polygon, image, points_added):
     bbox = maskIm.getbbox()
     mask = np.array(maskIm)
 
-    for i in range(mask.shape[0]):
-        for j in range(mask.shape[1]):
+    for i in range(max(0, bbox[1]-2), min(mask.shape[0], bbox[3]+2)):
+        for j in range(max(0, bbox[0]-2), min(mask.shape[1], bbox[2]+2)):
             if mask[i][j] != 0:
                 if (i,j) in points_added:
                     mask[i][j] = 0

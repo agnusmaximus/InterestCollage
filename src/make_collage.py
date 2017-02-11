@@ -142,9 +142,7 @@ def make_collage(collage_names, overlay_names):
     shattered_pieces = shatter(collage_initial, n_points=2)
     particles = [Particle(x) for x in shattered_pieces]
 
-    render_particles(particles, collage_initial.size).save("output/output_%d.png" % 0)
-    render_particles(particles, collage_initial.size).show()
-    sys.exit(0)
+    render_particles(particles, collage_initial.size).save("output/output_%d.png" % 0, quality=100)
     cur_step = 1
 
     for target_name in overlay_names:
@@ -157,9 +155,9 @@ def make_collage(collage_names, overlay_names):
             apply_direction_vectors(particles, collage_initial.size)
             intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)
             intermediate = render_particles(particles, collage_initial.size)
-            intermediate.save("test/%d.png" % i)
-            intermediate_overlay.save("test/%d_overlayed.png" % i)
-            intermediate.save("output/output%d.png" % cur_step)
+            intermediate.save("test/%d.png" % i, quality=100)
+            intermediate_overlay.save("test/%d_overlayed.png" % i, quality=100)
+            intermediate.save("output/output%d.png" % cur_step, quality=100)
             cur_step += 1
 
 if __name__=="__main__":

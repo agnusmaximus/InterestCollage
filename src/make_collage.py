@@ -110,7 +110,7 @@ def organize_grid(fnames, dim=200, n_cols=3):
 
 def resize_and_pad(image, new_size):
     old_size = image.size
-    new_im = Image.new("RGBA", new_size, (255, 255, 255, 0))
+    new_im = Image.new("RGBA", new_size, (128, 128, 128, 0))
     new_im.paste(image, ((new_size[0]-old_size[0])/2,
                          (new_size[1]-old_size[1])/2))
     return new_im
@@ -139,10 +139,12 @@ def apply_direction_vectors(particles, (w,h)):
 
 def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
-    shattered_pieces = shatter(collage_initial, n_points=15000)
+    shattered_pieces = shatter(collage_initial, n_points=2)
     particles = [Particle(x) for x in shattered_pieces]
 
     render_particles(particles, collage_initial.size).save("output/output_%d.png" % 0)
+    render_particles(particles, collage_initial.size).show()
+    sys.exit(0)
     cur_step = 1
 
     for target_name in overlay_names:

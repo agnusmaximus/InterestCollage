@@ -145,7 +145,7 @@ def apply_direction_vectors(particles, (w,h)):
 
 def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
-    shattered_pieces = shatter(collage_initial, n_points=2)
+    shattered_pieces = shatter(collage_initial, n_points=30000)
 
     particles = [Particle(x) for x in shattered_pieces]
 
@@ -153,7 +153,7 @@ def make_collage(collage_names, overlay_names):
     cur_step = 1
 
     for overlay_index, target_name in enumerate(overlay_names):
-
+        break
         target = Image.open(target_name).convert('L')
         target = target.point(lambda x: 0 if x<128 else 255, '1')
 
@@ -168,6 +168,8 @@ def make_collage(collage_names, overlay_names):
             cur_step += 1
 
     for i in range(700):
+        print("Floating back to origin... %d of %d" % (i, 700))
+
         for particle in particles:
             particle.direction_to_origin()
         for particle in particles:

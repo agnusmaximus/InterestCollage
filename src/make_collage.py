@@ -153,7 +153,6 @@ def make_collage(collage_names, overlay_names):
     cur_step = 1
 
     for overlay_index, target_name in enumerate(overlay_names):
-        break
         target = Image.open(target_name).convert('L')
         target = target.point(lambda x: 0 if x<128 else 255, '1')
 

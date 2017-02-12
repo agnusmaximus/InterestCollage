@@ -24,6 +24,12 @@ class Particle():
         self.orig_x, self.orig_y = self.x, self.y
         self.radius_pad = radius_pad
 
+    def direction_to_origin(self):
+        x, y, w, h = self.y, self.x, self.image.size[0], self.image.size[1]
+        self.direction = np.array([self.orig_x-(self.x+float(w)/2),
+                                   self.orig_y-(self.y+float(h)/2)])
+        self.direction = self.direction / max(np.linalg.norm(self.direction), 1)
+
     def compute_direction_vector(self, weights, array, contract=True):
         x, y, w, h = self.y, self.x, self.image.size[0], self.image.size[1]
 
@@ -50,7 +56,7 @@ class Particle():
                     self.direction = np.array([self.orig_x-(self.x+float(w)/2),
                                                self.orig_y-(self.y+float(h)/2)])
                 else:
-                    # Somewhat want to go back to the center                            
+                    # Somewhat want to go back to the center
                     self.direction = np.array([center_x-(self.x+float(w)/2),
                                                center_y-(self.y+float(h)/2)])
 
@@ -139,7 +145,7 @@ def apply_direction_vectors(particles, (w,h)):
 
 def make_collage(collage_names, overlay_names):
     collage_initial = organize_grid(collage_names)
-    shattered_pieces = shatter(collage_initial, n_points=30000)
+    shattered_pieces = shatter(collage_initial, n_points=2)
 
     particles = [Particle(x) for x in shattered_pieces]
 
@@ -151,7 +157,7 @@ def make_collage(collage_names, overlay_names):
         target = Image.open(target_name).convert('L')
         target = target.point(lambda x: 0 if x<128 else 255, '1')
 
-        for i in range(200):
+        for i in range(500):
             compute_direction_vectors(particles, target, collage_initial.size, contract=overlay_index % 2 == 0)
             apply_direction_vectors(particles, collage_initial.size)
             intermediate_overlay = render_particles_on_top_of_target(particles, target, collage_initial.size)
@@ -160,6 +166,16 @@ def make_collage(collage_names, overlay_names):
             intermediate_overlay.save("test/%d_overlayed.png" % i, quality=100)
             intermediate.save("output/%04d.png" % cur_step, quality=100)
             cur_step += 1
+
+    for i in range(700):
+        for particle in particles:
+            particle.direction_to_origin()
+        for particle in particles:
+            particle.apply_direction_vector(collage_initial.size)
+
+        intermediate = render_particles(particles, collage_initial.size)
+        intermediate.save("output/%04d.png" % cur_step, quality=100)
+        cur_step += 1
 
 if __name__=="__main__":
 
